@@ -191,12 +191,14 @@ public class Keuangan extends javax.swing.JFrame {
     }
     
     public void update_pendapatan() {
+        DefaultPieDataset pieDataset = new DefaultPieDataset();
         model_pendapatan.getDataVector().removeAllElements();
         model_pendapatan.fireTableDataChanged();
 
         int selected_month = pendapatan_month.getSelectedIndex();
-        String y = pendapatan_year.getText();
+        String y = pendapatan_year.getText(), metode;
         int selected_year = parseInt(y);
+        double total;
       
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.YEAR, selected_year);
@@ -220,22 +222,53 @@ public class Keuangan extends javax.swing.JFrame {
                     o[1] = r.getString("nominal");
                     o[2] = r.getString("tanggal");
                     o[3] = r.getString("metode_pembayaran");
+                    metode = r.getString("metode_pembayaran");
+                    total = r.getDouble("nominal");
+                    pieDataset.setValue(metode, total);
                     model_pendapatan.addRow(o);
                 }
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "An error occurred while processing the data.");
         }
+        
+        JFreeChart pieChart = ChartFactory.createPieChart(
+            "",                   // Title
+            pieDataset,           // Dataset
+            true,                // Legend
+            false,                 // Tooltips
+            false                 // URLs
+        );
+        
+        PiePlot piePlot = (PiePlot) pieChart.getPlot();
+        piePlot.setBackgroundPaint(Color.white);
+        piePlot.setLabelGenerator(null);
+        piePlot.setOutlinePaint(null);
+        
+        piePlot.setSectionPaint("QRIS", new Color(249, 65, 68));
+        piePlot.setSectionPaint("Cash", new Color(144, 190, 109));
+        piePlot.setSectionPaint("Credit Card", new Color(39, 125, 161));
+        
+        ChartPanel pieChartPanel = new ChartPanel(pieChart);
+        pieChartPanel.setPreferredSize(new Dimension(157, 41));
+        
+        pie_chart_pendapatan.setLayout(new BorderLayout());
+        pie_chart_pendapatan.removeAll();
+        pie_chart_pendapatan.add(pieChartPanel, BorderLayout.CENTER);
+        pie_chart_pendapatan.validate();
+        pie_chart_pendapatan.revalidate();
+        pie_chart_pendapatan.repaint();
     }
 
     public void update_pengeluaran() {
+        DefaultPieDataset pieDataset = new DefaultPieDataset();
         model_pengeluaran.getDataVector().removeAllElements();
-        
         model_pengeluaran.fireTableDataChanged();
         
         int selected_month = pengeluaran_month.getSelectedIndex();
-        String y = pengeluaran_year.getText();
+        String y = pengeluaran_year.getText(), metode;
         int selected_year = parseInt(y);
+        double total;
       
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.YEAR, selected_year);
@@ -259,12 +292,42 @@ public class Keuangan extends javax.swing.JFrame {
                     o[1] = r.getString("nominal");
                     o[2] = r.getString("tanggal");
                     o[3] = r.getString("metode_pembayaran");
+                    metode = r.getString("metode_pembayaran");
+                    total = r.getDouble("nominal");
+                    pieDataset.setValue(metode, total);
                     model_pengeluaran.addRow(o);
                 }
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "An error occurred while processing the data.");
         }
+        
+        JFreeChart pieChart = ChartFactory.createPieChart(
+            "",                   // Title
+            pieDataset,           // Dataset
+            true,                // Legend
+            false,                 // Tooltips
+            false                 // URLs
+        );
+        
+        PiePlot piePlot = (PiePlot) pieChart.getPlot();
+        piePlot.setBackgroundPaint(Color.white);
+        piePlot.setLabelGenerator(null);
+        piePlot.setOutlinePaint(null);
+        
+        piePlot.setSectionPaint("QRIS", new Color(249, 65, 68));
+        piePlot.setSectionPaint("Cash", new Color(144, 190, 109));
+        piePlot.setSectionPaint("Credit Card", new Color(39, 125, 161));
+        
+        ChartPanel pieChartPanel = new ChartPanel(pieChart);
+        pieChartPanel.setPreferredSize(new Dimension(157, 41));
+        
+        pie_chart_pengeluaran.setLayout(new BorderLayout());
+        pie_chart_pengeluaran.removeAll();
+        pie_chart_pengeluaran.add(pieChartPanel, BorderLayout.CENTER);
+        pie_chart_pengeluaran.validate();
+        pie_chart_pengeluaran.revalidate();
+        pie_chart_pengeluaran.repaint();
     }
     
     public void generate_report() {
@@ -624,18 +687,22 @@ public class Keuangan extends javax.swing.JFrame {
         laporan_starting_date = new com.toedter.calendar.JDateChooser();
         jLabel2 = new javax.swing.JLabel();
         laporan_ending_date = new com.toedter.calendar.JDateChooser();
-        main_content_pengeluaran = new javax.swing.JPanel();
-        header_pengeluaran = new javax.swing.JLabel();
-        scroll_tabel_keuangan_pengeluaran = new javax.swing.JScrollPane();
-        tabel_keuangan_pengeluaran = new javax.swing.JTable();
-        pengeluaran_year = new javax.swing.JTextField();
-        pengeluaran_month = new javax.swing.JComboBox<>();
         main_content_pendapatan = new javax.swing.JPanel();
         header_pendapatan = new javax.swing.JLabel();
         scroll_tabel_keuangan_pendapatan = new javax.swing.JScrollPane();
         tabel_keuangan_pendapatan = new javax.swing.JTable();
         pendapatan_month = new javax.swing.JComboBox<>();
         pendapatan_year = new javax.swing.JTextField();
+        pie_chart_pendapatan = new javax.swing.JPanel();
+        header3 = new javax.swing.JLabel();
+        main_content_pengeluaran = new javax.swing.JPanel();
+        header_pengeluaran = new javax.swing.JLabel();
+        scroll_tabel_keuangan_pengeluaran = new javax.swing.JScrollPane();
+        tabel_keuangan_pengeluaran = new javax.swing.JTable();
+        pengeluaran_year = new javax.swing.JTextField();
+        pengeluaran_month = new javax.swing.JComboBox<>();
+        pie_chart_pengeluaran = new javax.swing.JPanel();
+        header4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -968,14 +1035,12 @@ public class Keuangan extends javax.swing.JFrame {
         main_content_laporanLayout.setHorizontalGroup(
             main_content_laporanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(main_content_laporanLayout.createSequentialGroup()
+                .addGap(146, 146, 146)
                 .addGroup(main_content_laporanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(create_laporan)
                     .addGroup(main_content_laporanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(main_content_laporanLayout.createSequentialGroup()
-                            .addGap(146, 146, 146)
-                            .addComponent(header_laporan))
+                        .addComponent(header_laporan)
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_laporanLayout.createSequentialGroup()
-                            .addGap(146, 146, 146)
                             .addGroup(main_content_laporanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                 .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
                                 .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1004,81 +1069,6 @@ public class Keuangan extends javax.swing.JFrame {
         );
 
         Parent.add(main_content_laporan, "card5");
-
-        main_content_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
-        main_content_pengeluaran.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(174, 195, 176), 4));
-
-        header_pengeluaran.setFont(new java.awt.Font("JetBrainsMono NFM", 1, 36)); // NOI18N
-        header_pengeluaran.setText("Pengeluaran Keuangan");
-
-        scroll_tabel_keuangan_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
-        scroll_tabel_keuangan_pengeluaran.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        tabel_keuangan_pengeluaran.setFont(new java.awt.Font("Helvetica", 0, 17)); // NOI18N
-        tabel_keuangan_pengeluaran.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        scroll_tabel_keuangan_pengeluaran.setViewportView(tabel_keuangan_pengeluaran);
-
-        pengeluaran_year.setFont(new java.awt.Font("JetBrainsMono NF SemiBold", 0, 14)); // NOI18N
-        pengeluaran_year.setText("2024");
-        pengeluaran_year.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pengeluaran_yearActionPerformed(evt);
-            }
-        });
-
-        pengeluaran_month.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
-        pengeluaran_month.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember" }));
-        pengeluaran_month.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pengeluaran_monthActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout main_content_pengeluaranLayout = new javax.swing.GroupLayout(main_content_pengeluaran);
-        main_content_pengeluaran.setLayout(main_content_pengeluaranLayout);
-        main_content_pengeluaranLayout.setHorizontalGroup(
-            main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
-                .addGap(38, 38, 38)
-                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scroll_tabel_keuangan_pengeluaran, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 812, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pengeluaranLayout.createSequentialGroup()
-                        .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
-                                .addComponent(header_pengeluaran)
-                                .addGap(0, 276, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pengeluaranLayout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(pengeluaran_month, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pengeluaran_year, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(48, 48, 48))
-        );
-        main_content_pengeluaranLayout.setVerticalGroup(
-            main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pengeluaranLayout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addComponent(header_pengeluaran)
-                .addGap(18, 18, 18)
-                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(pengeluaran_month)
-                    .addComponent(pengeluaran_year, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scroll_tabel_keuangan_pengeluaran, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(95, Short.MAX_VALUE))
-        );
-
-        Parent.add(main_content_pengeluaran, "card5");
 
         main_content_pendapatan.setBackground(new java.awt.Color(255, 255, 255));
         main_content_pendapatan.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(174, 195, 176), 4));
@@ -1119,6 +1109,29 @@ public class Keuangan extends javax.swing.JFrame {
             }
         });
 
+        pie_chart_pendapatan.setBackground(new java.awt.Color(255, 255, 255));
+        pie_chart_pendapatan.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        header3.setFont(new java.awt.Font("JetBrainsMono NFM Light", 0, 18)); // NOI18N
+        header3.setText("Diagram");
+
+        javax.swing.GroupLayout pie_chart_pendapatanLayout = new javax.swing.GroupLayout(pie_chart_pendapatan);
+        pie_chart_pendapatan.setLayout(pie_chart_pendapatanLayout);
+        pie_chart_pendapatanLayout.setHorizontalGroup(
+            pie_chart_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pie_chart_pendapatanLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(header3)
+                .addGap(70, 70, 70))
+        );
+        pie_chart_pendapatanLayout.setVerticalGroup(
+            pie_chart_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pie_chart_pendapatanLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(header3)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout main_content_pendapatanLayout = new javax.swing.GroupLayout(main_content_pendapatan);
         main_content_pendapatan.setLayout(main_content_pendapatanLayout);
         main_content_pendapatanLayout.setHorizontalGroup(
@@ -1128,30 +1141,138 @@ public class Keuangan extends javax.swing.JFrame {
                 .addGroup(main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(main_content_pendapatanLayout.createSequentialGroup()
                         .addComponent(header_pendapatan)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(0, 394, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pendapatanLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(pendapatan_month, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(pendapatan_year, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(scroll_tabel_keuangan_pendapatan, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 812, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pendapatanLayout.createSequentialGroup()
+                        .addComponent(pie_chart_pendapatan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(scroll_tabel_keuangan_pendapatan, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(48, 48, 48))
         );
         main_content_pendapatanLayout.setVerticalGroup(
             main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pendapatanLayout.createSequentialGroup()
-                .addGap(25, 25, 25)
+                .addGap(42, 42, 42)
                 .addComponent(header_pendapatan)
-                .addGap(18, 18, 18)
+                .addGap(26, 26, 26)
                 .addGroup(main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(pendapatan_month)
                     .addComponent(pendapatan_year, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scroll_tabel_keuangan_pendapatan, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(95, Short.MAX_VALUE))
+                .addGroup(main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(pie_chart_pendapatan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(scroll_tabel_keuangan_pendapatan, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(70, Short.MAX_VALUE))
         );
 
         Parent.add(main_content_pendapatan, "card4");
+
+        main_content_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
+        main_content_pengeluaran.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(174, 195, 176), 4));
+
+        header_pengeluaran.setFont(new java.awt.Font("JetBrainsMono NFM", 1, 36)); // NOI18N
+        header_pengeluaran.setText("Pengeluaran Keuangan");
+
+        scroll_tabel_keuangan_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
+        scroll_tabel_keuangan_pengeluaran.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        tabel_keuangan_pengeluaran.setFont(new java.awt.Font("Helvetica", 0, 17)); // NOI18N
+        tabel_keuangan_pengeluaran.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        scroll_tabel_keuangan_pengeluaran.setViewportView(tabel_keuangan_pengeluaran);
+
+        pengeluaran_year.setFont(new java.awt.Font("JetBrainsMono NF SemiBold", 0, 14)); // NOI18N
+        pengeluaran_year.setText("2024");
+        pengeluaran_year.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pengeluaran_yearActionPerformed(evt);
+            }
+        });
+
+        pengeluaran_month.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
+        pengeluaran_month.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember" }));
+        pengeluaran_month.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pengeluaran_monthActionPerformed(evt);
+            }
+        });
+
+        pie_chart_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
+        pie_chart_pengeluaran.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        header4.setFont(new java.awt.Font("JetBrainsMono NFM Light", 0, 18)); // NOI18N
+        header4.setText("Diagram");
+
+        javax.swing.GroupLayout pie_chart_pengeluaranLayout = new javax.swing.GroupLayout(pie_chart_pengeluaran);
+        pie_chart_pengeluaran.setLayout(pie_chart_pengeluaranLayout);
+        pie_chart_pengeluaranLayout.setHorizontalGroup(
+            pie_chart_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pie_chart_pengeluaranLayout.createSequentialGroup()
+                .addContainerGap(73, Short.MAX_VALUE)
+                .addComponent(header4)
+                .addGap(70, 70, 70))
+        );
+        pie_chart_pengeluaranLayout.setVerticalGroup(
+            pie_chart_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pie_chart_pengeluaranLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(header4)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout main_content_pengeluaranLayout = new javax.swing.GroupLayout(main_content_pengeluaran);
+        main_content_pengeluaran.setLayout(main_content_pengeluaranLayout);
+        main_content_pengeluaranLayout.setHorizontalGroup(
+            main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
+                        .addComponent(header_pengeluaran)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
+                        .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
+                                .addComponent(pie_chart_pengeluaran, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGap(18, 18, 18)
+                                .addComponent(scroll_tabel_keuangan_pengeluaran, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(pengeluaran_month, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(pengeluaran_year, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(48, 48, 48))))
+        );
+        main_content_pengeluaranLayout.setVerticalGroup(
+            main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pengeluaranLayout.createSequentialGroup()
+                .addGap(42, 42, 42)
+                .addComponent(header_pengeluaran)
+                .addGap(26, 26, 26)
+                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(pengeluaran_month)
+                    .addComponent(pengeluaran_year, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(pie_chart_pengeluaran, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(scroll_tabel_keuangan_pengeluaran, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(70, Short.MAX_VALUE))
+        );
+
+        Parent.add(main_content_pengeluaran, "card5");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1284,6 +1405,8 @@ public class Keuangan extends javax.swing.JFrame {
     private javax.swing.JButton dashboard_button_side;
     private javax.swing.JLabel header1;
     private javax.swing.JLabel header2;
+    private javax.swing.JLabel header3;
+    private javax.swing.JLabel header4;
     private javax.swing.JLabel header_dashboard;
     private javax.swing.JLabel header_laporan;
     private javax.swing.JLabel header_pendapatan;
@@ -1318,6 +1441,8 @@ public class Keuangan extends javax.swing.JFrame {
     private javax.swing.JTextField pengeluaran_text_field;
     private javax.swing.JTextField pengeluaran_year;
     private javax.swing.JPanel pie_chart_dashboard;
+    private javax.swing.JPanel pie_chart_pendapatan;
+    private javax.swing.JPanel pie_chart_pengeluaran;
     private javax.swing.JScrollPane scroll_tabel_keuangan_pendapatan;
     private javax.swing.JScrollPane scroll_tabel_keuangan_pengeluaran;
     private javax.swing.JPanel side_bar;
