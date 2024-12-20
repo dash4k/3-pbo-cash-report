@@ -419,15 +419,16 @@ public class Keuangan extends javax.swing.JFrame {
             PDFont regular_font = PDType0Font.load(document, new File("/home/johntor81/Documents/NetBeans/CashReport/src/cashreport/fonts/FreeSerif.ttf"));
             
             float page_width = page1.getMediaBox().getWidth(), title_width,  centerX, margin = 50, yStart = 700, yPosition = yStart, tableWidth = 500, cellHeight = 20, cellMargin = 5;
-            float[] columnWidthsPendapatan = {100, 100, 150, 150};
+            float[] columnWidthsPendapatan = {100, 100, 100, 100, 100};
             float[] columnWidthsPengeluaran = {100, 100, 100, 100, 100};
             String text, formatted_nominal;
             
-            String[][] tableDataPendapatan = new String[jumlah_pendapatan+1][4];
+            String[][] tableDataPendapatan = new String[jumlah_pengeluaran+jumlah_pendapatan+1][5];
             tableDataPendapatan[table_index_pendapatan][0] = "ID";
             tableDataPendapatan[table_index_pendapatan][1] = "Nominal";
             tableDataPendapatan[table_index_pendapatan][2] = "Tanggal";
             tableDataPendapatan[table_index_pendapatan][3] = "Metode";
+            tableDataPendapatan[table_index_pendapatan][4] = "Jenis";
             table_index_pendapatan++;
             
             String[][] tableDataPengeluaran = new String[jumlah_pengeluaran+1][5];
@@ -438,7 +439,7 @@ public class Keuangan extends javax.swing.JFrame {
             tableDataPengeluaran[table_index_pengeluaran][4] = "Metode";
             table_index_pengeluaran++;
             
-            sql = "SELECT id_transaksi, nominal, tanggal, metode_pembayaran FROM transaksi WHERE jenis_pembayaran = 'pemasukan' AND tanggal BETWEEN ? AND ? ORDER BY tanggal ASC";
+            sql = "SELECT id_transaksi, nominal, tanggal, metode_pembayaran, jenis_pembayaran FROM transaksi WHERE tanggal BETWEEN ? AND ? ORDER BY tanggal ASC, nominal DESC, jenis_pembayaran ASC, metode_pembayaran ASC";
             
             try (Connection c = KoneksiMySql.getKoneksi(); PreparedStatement s = c.prepareStatement(sql)) {
             s.setDate(1, sqlStartDate); 
@@ -452,6 +453,7 @@ public class Keuangan extends javax.swing.JFrame {
                         tableDataPendapatan[table_index_pendapatan][1] = "Rp. " + formatted_nominal;
                         tableDataPendapatan[table_index_pendapatan][2] = r.getString("tanggal");
                         tableDataPendapatan[table_index_pendapatan][3] = r.getString("metode_pembayaran");
+                        tableDataPendapatan[table_index_pendapatan][4] = r.getString("jenis_pembayaran");
                         table_index_pendapatan++;
                     }
                 }
@@ -474,6 +476,7 @@ public class Keuangan extends javax.swing.JFrame {
                         transaksi ON penggajian.id_transaksi = transaksi.id_transaksi
                     WHERE 
                         transaksi.tanggal BETWEEN ? AND ?
+                    ORDER BY users.role DESC, transaksi.nominal DESC, transaksi.metode_pembayaran ASC 
                     """;
             
             try (Connection c = KoneksiMySql.getKoneksi(); PreparedStatement s = c.prepareStatement(sql)) {
@@ -632,7 +635,7 @@ public class Keuangan extends javax.swing.JFrame {
                 
                 contentStream1.beginText();
                 contentStream1.setFont(regular_font, 12);
-                text = "detail rincian pendapatan dan pengeluaran terlampir.";
+                text = "detail rincian transaksi dan penggajian yang dimiliki perusahaan terlampir.";
                 contentStream1.newLineAtOffset(55, 330);
                 contentStream1.showText(text);
                 contentStream1.endText();
@@ -685,7 +688,7 @@ public class Keuangan extends javax.swing.JFrame {
                 contentStream2.setFont(bold_font, 12);
                 
                 contentStream2.beginText();
-                text = "Lampiran 1: Rincian Pendapatan";
+                text = "Lampiran 1: Rincian Transaksi";
                 contentStream2.newLineAtOffset(55, 740);
                 contentStream2.showText(text);
                 contentStream2.endText();
@@ -746,10 +749,14 @@ public class Keuangan extends javax.swing.JFrame {
                     
                     contentStream2.setFont(regular_font, 12);
                     for (int j = 0; j < tableDataPendapatan[i].length; j++) {
+                        String cellData = tableDataPendapatan[i][j];
+                        if (cellData == null) {
+                            cellData = ""; // If null, set to an empty string
+                        }
                         float xPosition = margin + (j * columnWidthsPendapatan[j]);
                         contentStream2.beginText();
                         contentStream2.newLineAtOffset(xPosition + cellMargin, yPosition);
-                        contentStream2.showText(tableDataPendapatan[i][j]);
+                        contentStream2.showText(cellData);
                         contentStream2.endText();
                     }
                     contentStream2.setFont(regular_font, 12);
@@ -785,7 +792,7 @@ public class Keuangan extends javax.swing.JFrame {
                 contentStream3.setFont(bold_font, 12);
                 
                 contentStream3.beginText();
-                text = "Lampiran 2: Rincian Pengeluaran";
+                text = "Lampiran 2: Rincian Penggajian";
                 contentStream3.newLineAtOffset(55, 740);
                 contentStream3.showText(text);
                 contentStream3.endText();
