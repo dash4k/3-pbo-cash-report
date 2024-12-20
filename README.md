@@ -55,6 +55,8 @@ Danishwara Pracheta (2308561050): [@dash4k](https://www.github.com/dash4k)
 </br></br>
 Maliqy Tritata (2308561068): [@Maliqytritata](https://github.com/Maliqytritata)
 </br></br>
+Putu Mahayoni (2308561110)
+</br></br>
 Putu Krisna (2308561122): [@krisna554](https://github.com/krisna554)
 </br></br>
 Dewa Mahattama (2308561137): [@DewaMahattama](https://github.com/DewaMahattama)
