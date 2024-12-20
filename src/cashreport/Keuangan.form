@@ -56,8 +56,8 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="pengeluaran_button_edit" alignment="0" min="-2" pref="163" max="-2" attributes="0"/>
-                      <Component id="pendapatan_button_edit" alignment="0" min="-2" pref="163" max="-2" attributes="0"/>
+                      <Component id="payroll_button_edit" alignment="0" min="-2" pref="163" max="-2" attributes="0"/>
+                      <Component id="transaksi_button_edit" alignment="0" min="-2" pref="163" max="-2" attributes="0"/>
                       <Component id="laporan_button_edit" alignment="0" min="-2" pref="163" max="-2" attributes="0"/>
                       <Component id="dashboard_button_side" alignment="0" min="-2" pref="163" max="-2" attributes="0"/>
                   </Group>
@@ -73,9 +73,9 @@
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="laporan_button_edit" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="pendapatan_button_edit" min="-2" max="-2" attributes="0"/>
+                  <Component id="transaksi_button_edit" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="pengeluaran_button_edit" min="-2" max="-2" attributes="0"/>
+                  <Component id="payroll_button_edit" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="122" max="-2" attributes="0"/>
               </Group>
           </Group>
@@ -110,7 +110,7 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="laporan_button_editActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JButton" name="pendapatan_button_edit">
+        <Component class="javax.swing.JButton" name="transaksi_button_edit">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="92" green="95" red="96" type="rgb"/>
@@ -118,13 +118,13 @@
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="JetBrainsMono NF ExtraBold" size="18" style="1"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="PENDAPATAN"/>
+            <Property name="text" type="java.lang.String" value="TRANSAKSI"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pendapatan_button_editActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="transaksi_button_editActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JButton" name="pengeluaran_button_edit">
+        <Component class="javax.swing.JButton" name="payroll_button_edit">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="92" green="95" red="96" type="rgb"/>
@@ -132,10 +132,10 @@
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="JetBrainsMono NF ExtraBold" size="18" style="1"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="PENGELUARAN"/>
+            <Property name="text" type="java.lang.String" value="PAYROLL"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pengeluaran_button_editActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="payroll_button_editActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>
@@ -693,7 +693,7 @@
             </Component>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="main_content_pendapatan">
+        <Container class="javax.swing.JPanel" name="main_content_transaksi">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -719,19 +719,19 @@
                       <EmptySpace min="-2" pref="38" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <Component id="header_pendapatan" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="394" max="32767" attributes="0"/>
+                              <Component id="header_transaksi" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="416" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                              <Component id="pendapatan_month" min="-2" pref="150" max="-2" attributes="0"/>
+                              <Component id="transaksi_month" min="-2" pref="150" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="pendapatan_year" min="-2" pref="90" max="-2" attributes="0"/>
+                              <Component id="transaksi_year" min="-2" pref="90" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
-                              <Component id="pie_chart_pendapatan" max="32767" attributes="0"/>
+                              <Component id="pie_chart_transaksi" max="32767" attributes="0"/>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="scroll_tabel_keuangan_pendapatan" min="-2" pref="570" max="-2" attributes="0"/>
+                              <Component id="scroll_tabel_keuangan_transaksi" min="-2" pref="570" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace min="-2" pref="48" max="-2" attributes="0"/>
@@ -742,16 +742,16 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="-2" pref="42" max="-2" attributes="0"/>
-                      <Component id="header_pendapatan" min="-2" max="-2" attributes="0"/>
+                      <Component id="header_transaksi" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="pendapatan_month" alignment="0" max="32767" attributes="0"/>
-                          <Component id="pendapatan_year" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
+                          <Component id="transaksi_month" alignment="0" max="32767" attributes="0"/>
+                          <Component id="transaksi_year" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="pie_chart_pendapatan" max="32767" attributes="0"/>
-                          <Component id="scroll_tabel_keuangan_pendapatan" min="-2" pref="290" max="-2" attributes="0"/>
+                          <Component id="pie_chart_transaksi" max="32767" attributes="0"/>
+                          <Component id="scroll_tabel_keuangan_transaksi" min="-2" pref="290" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace pref="70" max="32767" attributes="0"/>
                   </Group>
@@ -759,15 +759,15 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="header_pendapatan">
+            <Component class="javax.swing.JLabel" name="header_transaksi">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="JetBrainsMono NFM" size="36" style="1"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Pendapatan Keuangan"/>
+                <Property name="text" type="java.lang.String" value="Transaksi Keuangan"/>
               </Properties>
             </Component>
-            <Container class="javax.swing.JScrollPane" name="scroll_tabel_keuangan_pendapatan">
+            <Container class="javax.swing.JScrollPane" name="scroll_tabel_keuangan_transaksi">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="cc" green="cc" red="cc" type="rgb"/>
@@ -781,7 +781,7 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
               <SubComponents>
-                <Component class="javax.swing.JTable" name="tabel_keuangan_pendapatan">
+                <Component class="javax.swing.JTable" name="tabel_keuangan_transaksi">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                       <Font name="Helvetica" size="17" style="0"/>
@@ -798,7 +798,7 @@
                 </Component>
               </SubComponents>
             </Container>
-            <Component class="javax.swing.JComboBox" name="pendapatan_month">
+            <Component class="javax.swing.JComboBox" name="transaksi_month">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="JetBrainsMono NFM SemiBold" size="14" style="0"/>
@@ -821,13 +821,13 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pendapatan_monthActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="transaksi_monthActionPerformed"/>
               </Events>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JTextField" name="pendapatan_year">
+            <Component class="javax.swing.JTextField" name="transaksi_year">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="JetBrainsMono NFM SemiBold" size="14" style="0"/>
@@ -835,10 +835,10 @@
                 <Property name="text" type="java.lang.String" value="2024"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pendapatan_yearActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="transaksi_yearActionPerformed"/>
               </Events>
             </Component>
-            <Container class="javax.swing.JPanel" name="pie_chart_pendapatan">
+            <Container class="javax.swing.JPanel" name="pie_chart_transaksi">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -883,7 +883,7 @@
             </Container>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="main_content_pengeluaran">
+        <Container class="javax.swing.JPanel" name="main_content_payroll">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -909,21 +909,21 @@
                       <EmptySpace min="-2" pref="38" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <Component id="header_pengeluaran" min="-2" max="-2" attributes="0"/>
+                              <Component id="header_payroll" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="1" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="pie_chart_pengeluaran" max="32767" attributes="0"/>
+                                      <Component id="pie_chart_payroll" max="32767" attributes="0"/>
                                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                                      <Component id="scroll_tabel_keuangan_pengeluaran" min="-2" pref="570" max="-2" attributes="0"/>
+                                      <Component id="scroll_tabel_keuangan_payroll" min="-2" pref="570" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" attributes="0">
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                      <Component id="pengeluaran_month" min="-2" pref="150" max="-2" attributes="0"/>
+                                      <Component id="payroll_month" min="-2" pref="150" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="pengeluaran_year" min="-2" pref="90" max="-2" attributes="0"/>
+                                      <Component id="payroll_year" min="-2" pref="90" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace min="-2" pref="48" max="-2" attributes="0"/>
@@ -936,16 +936,16 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="-2" pref="42" max="-2" attributes="0"/>
-                      <Component id="header_pengeluaran" min="-2" max="-2" attributes="0"/>
+                      <Component id="header_payroll" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="pengeluaran_month" max="32767" attributes="0"/>
-                          <Component id="pengeluaran_year" min="-2" pref="40" max="-2" attributes="0"/>
+                          <Component id="payroll_month" max="32767" attributes="0"/>
+                          <Component id="payroll_year" min="-2" pref="40" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="pie_chart_pengeluaran" max="32767" attributes="0"/>
-                          <Component id="scroll_tabel_keuangan_pengeluaran" min="-2" pref="290" max="-2" attributes="0"/>
+                          <Component id="pie_chart_payroll" max="32767" attributes="0"/>
+                          <Component id="scroll_tabel_keuangan_payroll" min="-2" pref="290" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace pref="70" max="32767" attributes="0"/>
                   </Group>
@@ -953,15 +953,15 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="header_pengeluaran">
+            <Component class="javax.swing.JLabel" name="header_payroll">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="JetBrainsMono NFM" size="36" style="1"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Pengeluaran Keuangan"/>
+                <Property name="text" type="java.lang.String" value="Payroll Keuangan"/>
               </Properties>
             </Component>
-            <Container class="javax.swing.JScrollPane" name="scroll_tabel_keuangan_pengeluaran">
+            <Container class="javax.swing.JScrollPane" name="scroll_tabel_keuangan_payroll">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -992,7 +992,7 @@
                 </Component>
               </SubComponents>
             </Container>
-            <Component class="javax.swing.JTextField" name="pengeluaran_year">
+            <Component class="javax.swing.JTextField" name="payroll_year">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="JetBrainsMono NF SemiBold" size="14" style="0"/>
@@ -1000,10 +1000,10 @@
                 <Property name="text" type="java.lang.String" value="2024"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pengeluaran_yearActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="payroll_yearActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JComboBox" name="pengeluaran_month">
+            <Component class="javax.swing.JComboBox" name="payroll_month">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="JetBrainsMono NFM SemiBold" size="14" style="0"/>
@@ -1026,13 +1026,13 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pengeluaran_monthActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="payroll_monthActionPerformed"/>
               </Events>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
             </Component>
-            <Container class="javax.swing.JPanel" name="pie_chart_pengeluaran">
+            <Container class="javax.swing.JPanel" name="pie_chart_payroll">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>

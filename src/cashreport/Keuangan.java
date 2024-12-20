@@ -44,7 +44,7 @@ import java.util.Locale;
  * @author johntor81
  */
 public class Keuangan extends javax.swing.JFrame {
-    private DefaultTableModel model_pendapatan = null;
+    private DefaultTableModel model_transaksi = null;
     private DefaultTableModel model_pengeluaran = null;
     private int selected_pendapatan_year = 0, selected_pendapatan_month = 0, selected_pengeluaran_year = 0, selected_pengeluaran_month = 0;
     String selected_starting_date = "", selected_ending_date = "";
@@ -70,7 +70,7 @@ public class Keuangan extends javax.swing.JFrame {
                     }
                 }
             }
-            NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.getDefault());
+//            NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.getDefault());
             DecimalFormat decimalFormat = new DecimalFormat("#,###.00");
             String formatted_pendapatan = decimalFormat.format(pendapatan), formatted_pengeluaran = decimalFormat.format(pengeluaran), formatted_laba_bersih = decimalFormat.format(laba_bersih);
             laba_bersih_text_field.setText("Rp. " + String.valueOf(formatted_laba_bersih));
@@ -190,13 +190,13 @@ public class Keuangan extends javax.swing.JFrame {
         pie_chart_dashboard.repaint();
     }
     
-    public void update_pendapatan() {
+    public void update_transaksi() {
         DefaultPieDataset pieDataset = new DefaultPieDataset();
-        model_pendapatan.getDataVector().removeAllElements();
-        model_pendapatan.fireTableDataChanged();
+        model_transaksi.getDataVector().removeAllElements();
+        model_transaksi.fireTableDataChanged();
 
-        int selected_month = pendapatan_month.getSelectedIndex();
-        String y = pendapatan_year.getText(), metode;
+        int selected_month = transaksi_month.getSelectedIndex();
+        String y = transaksi_year.getText(), category;
         int selected_year = parseInt(y);
         double total;
       
@@ -209,7 +209,17 @@ public class Keuangan extends javax.swing.JFrame {
         calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         java.sql.Date endDate = new java.sql.Date(calendar.getTimeInMillis());
 
-        String sql = "SELECT id_transaksi, nominal, tanggal, metode_pembayaran FROM transaksi WHERE jenis_pembayaran = 'pemasukan' AND tanggal BETWEEN ? AND ? ORDER BY tanggal DESC";
+        String sql = """
+                    SELECT id_transaksi, nominal, tanggal, metode_pembayaran, 
+                    CASE 
+                        WHEN jenis_pembayaran = 'pemasukan' THEN 'Pendapatan' 
+                        WHEN jenis_pembayaran = 'pengeluaran' THEN 'Pengeluaran' 
+                    END AS category
+                    FROM transaksi
+                    WHERE tanggal BETWEEN ? AND ?
+                    ORDER BY tanggal DESC
+                     """;
+
 
         try (Connection c = KoneksiMySql.getKoneksi(); PreparedStatement s = c.prepareStatement(sql)) {
             s.setDate(1, startDate); 
@@ -217,15 +227,16 @@ public class Keuangan extends javax.swing.JFrame {
 
             try (ResultSet r = s.executeQuery()) {
                 while (r.next()) {
-                    Object[] o = new Object[4];
+                    Object[] o = new Object[5];
                     o[0] = r.getString("id_transaksi");
                     o[1] = r.getString("nominal");
                     o[2] = r.getString("tanggal");
                     o[3] = r.getString("metode_pembayaran");
-                    metode = r.getString("metode_pembayaran");
+                    o[4] = r.getString("category");
+                    category = r.getString("category");
                     total = r.getDouble("nominal");
-                    pieDataset.setValue(metode, total);
-                    model_pendapatan.addRow(o);
+                    pieDataset.setValue(category, total);
+                    model_transaksi.addRow(o);
                 }
             }
         } catch (SQLException e) {
@@ -245,28 +256,27 @@ public class Keuangan extends javax.swing.JFrame {
         piePlot.setLabelGenerator(null);
         piePlot.setOutlinePaint(null);
         
-        piePlot.setSectionPaint("QRIS", new Color(249, 65, 68));
-        piePlot.setSectionPaint("Cash", new Color(144, 190, 109));
-        piePlot.setSectionPaint("Credit Card", new Color(39, 125, 161));
+        piePlot.setSectionPaint("Pendapatan", new Color(6,214,160));
+        piePlot.setSectionPaint("Pengeluaran", new Color(239,71,111));
         
         ChartPanel pieChartPanel = new ChartPanel(pieChart);
         pieChartPanel.setPreferredSize(new Dimension(157, 41));
         
-        pie_chart_pendapatan.setLayout(new BorderLayout());
-        pie_chart_pendapatan.removeAll();
-        pie_chart_pendapatan.add(pieChartPanel, BorderLayout.CENTER);
-        pie_chart_pendapatan.validate();
-        pie_chart_pendapatan.revalidate();
-        pie_chart_pendapatan.repaint();
+        pie_chart_transaksi.setLayout(new BorderLayout());
+        pie_chart_transaksi.removeAll();
+        pie_chart_transaksi.add(pieChartPanel, BorderLayout.CENTER);
+        pie_chart_transaksi.validate();
+        pie_chart_transaksi.revalidate();
+        pie_chart_transaksi.repaint();
     }
 
-    public void update_pengeluaran() {
+    public void update_payroll() {
         DefaultPieDataset pieDataset = new DefaultPieDataset();
         model_pengeluaran.getDataVector().removeAllElements();
         model_pengeluaran.fireTableDataChanged();
         
-        int selected_month = pengeluaran_month.getSelectedIndex();
-        String y = pengeluaran_year.getText(), metode;
+        int selected_month = payroll_month.getSelectedIndex();
+        String y = payroll_year.getText(), metode;
         int selected_year = parseInt(y);
         double total;
       
@@ -279,7 +289,22 @@ public class Keuangan extends javax.swing.JFrame {
         calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         java.sql.Date endDate = new java.sql.Date(calendar.getTimeInMillis());
 
-        String sql = "SELECT id_transaksi, nominal, tanggal, metode_pembayaran FROM transaksi WHERE jenis_pembayaran = 'pengeluaran' AND tanggal BETWEEN ? AND ? ORDER BY tanggal DESC";
+        String sql = """
+                    SELECT 
+                        users.nama_user AS nama_pegawai, 
+                        users.role, 
+                        transaksi.nominal, 
+                        penggajian.potongan,
+                        transaksi.metode_pembayaran
+                    FROM 
+                        penggajian
+                    JOIN 
+                        users ON penggajian.id_user = users.id_user
+                    JOIN 
+                        transaksi ON penggajian.id_transaksi = transaksi.id_transaksi
+                    WHERE 
+                        transaksi.tanggal BETWEEN ? AND ?
+                    """;
 
         try (Connection c = KoneksiMySql.getKoneksi(); PreparedStatement s = c.prepareStatement(sql)) {
             s.setDate(1, startDate); 
@@ -287,11 +312,12 @@ public class Keuangan extends javax.swing.JFrame {
 
             try (ResultSet r = s.executeQuery()) {
                 while (r.next()) {
-                    Object[] o = new Object[4];
-                    o[0] = r.getString("id_transaksi");
-                    o[1] = r.getString("nominal");
-                    o[2] = r.getString("tanggal");
-                    o[3] = r.getString("metode_pembayaran");
+                    Object[] o = new Object[5];
+                    o[0] = r.getString("nama_pegawai");
+                    o[1] = r.getString("role");
+                    o[2] = r.getString("nominal");
+                    o[3] = r.getString("potongan");
+                    o[4] = r.getString("metode_pembayaran");
                     metode = r.getString("metode_pembayaran");
                     total = r.getDouble("nominal");
                     pieDataset.setValue(metode, total);
@@ -322,17 +348,17 @@ public class Keuangan extends javax.swing.JFrame {
         ChartPanel pieChartPanel = new ChartPanel(pieChart);
         pieChartPanel.setPreferredSize(new Dimension(157, 41));
         
-        pie_chart_pengeluaran.setLayout(new BorderLayout());
-        pie_chart_pengeluaran.removeAll();
-        pie_chart_pengeluaran.add(pieChartPanel, BorderLayout.CENTER);
-        pie_chart_pengeluaran.validate();
-        pie_chart_pengeluaran.revalidate();
-        pie_chart_pengeluaran.repaint();
+        pie_chart_payroll.setLayout(new BorderLayout());
+        pie_chart_payroll.removeAll();
+        pie_chart_payroll.add(pieChartPanel, BorderLayout.CENTER);
+        pie_chart_payroll.validate();
+        pie_chart_payroll.revalidate();
+        pie_chart_payroll.repaint();
     }
     
     public void generate_report() {
         PDDocument document = new PDDocument();
-        int pendapatan = 0, pengeluaran = 0, laba_bersih = 0;
+        int pendapatan = 0, pengeluaran = 0, laba_bersih = 0, jumlah_pendapatan = 0, jumlah_pengeluaran = 0, table_index_pendapatan = 0, table_index_pengeluaran = 0, nominal;
         LocalDate currentDate = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
         String formattedDate = currentDate.format(formatter);
@@ -366,10 +392,12 @@ public class Keuangan extends javax.swing.JFrame {
                     if ("pemasukan".equals(r.getString("jenis_pembayaran"))) {
                         laba_bersih += r.getInt("nominal");
                         pendapatan += r.getInt("nominal");
+                        jumlah_pendapatan++;
                     }
                     else {
                         laba_bersih -= r.getInt("nominal");
                         pengeluaran += r.getInt("nominal");
+                        jumlah_pengeluaran++;
                     } 
                 }
             }
@@ -382,192 +410,482 @@ public class Keuangan extends javax.swing.JFrame {
         String formatted_pendapatan = decimalFormat.format(pendapatan), formatted_pengeluaran = decimalFormat.format(pengeluaran), formatted_laba_bersih = decimalFormat.format(laba_bersih);
 
         try {
-            PDPage page = new PDPage();
-            document.addPage(page);
+            PDPage page1 = new PDPage();
+            document.addPage(page1);
 
             PDFont italic_font = PDType0Font.load(document, new File("/home/johntor81/Documents/NetBeans/CashReport/src/cashreport/fonts/FreeSerifItalic.ttf"));
             PDFont bold_italic_font = PDType0Font.load(document, new File("/home/johntor81/Documents/NetBeans/CashReport/src/cashreport/fonts/FreeSerifBoldItalic.ttf"));
             PDFont bold_font = PDType0Font.load(document, new File("/home/johntor81/Documents/NetBeans/CashReport/src/cashreport/fonts/FreeSerifBold.ttf"));
             PDFont regular_font = PDType0Font.load(document, new File("/home/johntor81/Documents/NetBeans/CashReport/src/cashreport/fonts/FreeSerif.ttf"));
             
-            float page_width = page.getMediaBox().getWidth(), title_width,  centerX;
-            String text;
+            float page_width = page1.getMediaBox().getWidth(), title_width,  centerX, margin = 50, yStart = 700, yPosition = yStart, tableWidth = 500, cellHeight = 20, cellMargin = 5;
+            float[] columnWidthsPendapatan = {100, 100, 150, 150};
+            float[] columnWidthsPengeluaran = {100, 100, 100, 100, 100};
+            String text, formatted_nominal;
+            
+            String[][] tableDataPendapatan = new String[jumlah_pendapatan+1][4];
+            tableDataPendapatan[table_index_pendapatan][0] = "ID";
+            tableDataPendapatan[table_index_pendapatan][1] = "Nominal";
+            tableDataPendapatan[table_index_pendapatan][2] = "Tanggal";
+            tableDataPendapatan[table_index_pendapatan][3] = "Metode";
+            table_index_pendapatan++;
+            
+            String[][] tableDataPengeluaran = new String[jumlah_pengeluaran+1][5];
+            tableDataPengeluaran[table_index_pengeluaran][0] = "Nama";
+            tableDataPengeluaran[table_index_pengeluaran][1] = "Jabatan";
+            tableDataPengeluaran[table_index_pengeluaran][2] = "Nominal";
+            tableDataPengeluaran[table_index_pengeluaran][3] = "Potongan";
+            tableDataPengeluaran[table_index_pengeluaran][4] = "Metode";
+            table_index_pengeluaran++;
+            
+            sql = "SELECT id_transaksi, nominal, tanggal, metode_pembayaran FROM transaksi WHERE jenis_pembayaran = 'pemasukan' AND tanggal BETWEEN ? AND ? ORDER BY tanggal ASC";
+            
+            try (Connection c = KoneksiMySql.getKoneksi(); PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, sqlStartDate); 
+            s.setDate(2, sqlEndDate); 
+            
+                try (ResultSet r = s.executeQuery()) {
+                    while (r.next()) {
+                        nominal = r.getInt("nominal");
+                        formatted_nominal = decimalFormat.format(nominal);
+                        tableDataPendapatan[table_index_pendapatan][0] = r.getString("id_transaksi");
+                        tableDataPendapatan[table_index_pendapatan][1] = "Rp. " + formatted_nominal;
+                        tableDataPendapatan[table_index_pendapatan][2] = r.getString("tanggal");
+                        tableDataPendapatan[table_index_pendapatan][3] = r.getString("metode_pembayaran");
+                        table_index_pendapatan++;
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "An error occurred while processing the data.");
+            }
+            
+            sql = """
+                    SELECT 
+                        users.nama_user AS nama_pegawai, 
+                        users.role, 
+                        transaksi.nominal, 
+                        penggajian.potongan,
+                        transaksi.metode_pembayaran
+                    FROM 
+                        penggajian
+                    JOIN 
+                        users ON penggajian.id_user = users.id_user
+                    JOIN 
+                        transaksi ON penggajian.id_transaksi = transaksi.id_transaksi
+                    WHERE 
+                        transaksi.tanggal BETWEEN ? AND ?
+                    """;
+            
+            try (Connection c = KoneksiMySql.getKoneksi(); PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, sqlStartDate); 
+            s.setDate(2, sqlEndDate); 
+            
+                try (ResultSet r = s.executeQuery()) {
+                    while (r.next()) {
+                        nominal = r.getInt("nominal");
+                        formatted_nominal = decimalFormat.format(nominal);
+                        tableDataPengeluaran[table_index_pengeluaran][0] = r.getString("nama_pegawai");
+                        tableDataPengeluaran[table_index_pengeluaran][1] = r.getString("role");
+                        tableDataPengeluaran[table_index_pengeluaran][2] = "Rp. " + formatted_nominal;
+                        nominal = r.getInt("potongan");
+                        formatted_nominal = decimalFormat.format(nominal);
+                        tableDataPengeluaran[table_index_pengeluaran][3] = "Rp. " + formatted_nominal;
+                        tableDataPengeluaran[table_index_pengeluaran][4] = r.getString("metode_pembayaran");
+                        table_index_pengeluaran++;
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "An error occurred while processing the data.");
+            }
 
-            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+            try (PDPageContentStream contentStream1 = new PDPageContentStream(document, page1)) {
                 // Start the text
-                contentStream.beginText();
-                contentStream.setFont(bold_font, 20);
+                contentStream1.beginText();
+                contentStream1.setFont(bold_font, 20);
                 text = "PT PENIKMAT BABI GULING";
                 title_width = bold_font.getStringWidth(text)/1000*20;
                 centerX = (page_width - title_width)/2;
-                contentStream.newLineAtOffset(centerX, 750);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(centerX, 750);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Jl. Pan Kenzie 15K No. 20, Ngawi Utara";
                 title_width = regular_font.getStringWidth(text)/1000*12;
                 centerX = (page_width - title_width)/2;
-                contentStream.newLineAtOffset(centerX, 730);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(centerX, 730);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Telp/Fax: 021 88994433, email: pan_kenzie@enak.banget";
                 title_width = regular_font.getStringWidth(text)/1000*12;
                 centerX = (page_width - title_width)/2;
-                contentStream.newLineAtOffset(centerX, 710);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(centerX, 710);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.moveTo(50, 700);
-                contentStream.lineTo(550, 700);
-                contentStream.stroke();
-                contentStream.moveTo(50, 701);
-                contentStream.lineTo(550, 701);
-                contentStream.stroke();
-                contentStream.moveTo(50, 702);
-                contentStream.lineTo(550, 702);
-                contentStream.stroke();
+                contentStream1.moveTo(50, 700);
+                contentStream1.lineTo(550, 700);
+                contentStream1.stroke();
+                contentStream1.moveTo(50, 701);
+                contentStream1.lineTo(550, 701);
+                contentStream1.stroke();
+                contentStream1.moveTo(50, 702);
+                contentStream1.lineTo(550, 702);
+                contentStream1.stroke();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Ngawi Utara, " + formattedDate;
                 title_width = regular_font.getStringWidth(text)/1000*12;
                 centerX = (page_width - title_width - 65);
-                contentStream.newLineAtOffset(centerX, 680);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(centerX, 680);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "No              : " + this.selected_starting_date + "/" + this.selected_ending_date;
-                contentStream.newLineAtOffset(55, 665);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(55, 665);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
-                text = "Lampiran   : -";
-                contentStream.newLineAtOffset(55, 650);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
+                text = "Lampiran   : 2";
+                contentStream1.newLineAtOffset(55, 650);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Hal             : Arus Kas Per Tanggal " + this.selected_starting_date + " Hingga " + this.selected_ending_date;
-                contentStream.newLineAtOffset(55, 635);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(55, 635);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Dengan hormat, ";
-                contentStream.newLineAtOffset(55, 550);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(55, 550);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Sehubungan dengan kegiatan operasional PT PENIKMAT BABI GULING pada tanggal " + this.selected_starting_date + ",";
-                contentStream.newLineAtOffset(55, 530);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(55, 530);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "hingga tanggal " + this.selected_ending_date + ". Menyampaikan laporan keuangan sebagai berikut:";
-                contentStream.newLineAtOffset(55, 510);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(55, 510);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(bold_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(bold_font, 12);
                 text = "Pendapatan   : Rp. " + formatted_pendapatan;
-                contentStream.newLineAtOffset(90, 465);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(90, 465);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(bold_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(bold_font, 12);
                 text = "Pengeluaran  : Rp. " + formatted_pengeluaran;
-                contentStream.newLineAtOffset(90, 445);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(90, 445);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(bold_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(bold_font, 12);
                 text = "———————————————————  -";
-                contentStream.newLineAtOffset(90, 433);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(90, 433);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(bold_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(bold_font, 12);
                 text = "Laba Bersih  : Rp. " + formatted_laba_bersih;
-                contentStream.newLineAtOffset(90, 420);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(90, 420);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Kami berharap laporan keuangan ini, dapat memberikan gambaran yang jelas tentang kondisi keuangan";
-                contentStream.newLineAtOffset(55, 370);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(55, 370);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
-                text = "perusahaan PT PENIKMAT BABI GULING pada tanggal " + this.selected_starting_date + " hingga " + this.selected_ending_date + ". Apabila ada";
-                contentStream.newLineAtOffset(55, 350);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
+                text = "perusahaan PT PENIKMAT BABI GULING pada tanggal " + this.selected_starting_date + " hingga " + this.selected_ending_date + ". Adapun";
+                contentStream1.newLineAtOffset(55, 350);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
-                text = "pertanyaan atau klarifikasi lebih lanjut, kamis siap memberikan penjelasan lebih detail.";
-                contentStream.newLineAtOffset(55, 330);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
+                text = "detail rincian pendapatan dan pengeluaran terlampir.";
+                contentStream1.newLineAtOffset(55, 330);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Demikian lapooran keuangan ini kami sampaikan. Terima kasih atas perhatian dan kerjasamanya.";
-                contentStream.newLineAtOffset(55, 290);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(55, 290);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Hormat kami,";
                 title_width = regular_font.getStringWidth(text)/1000*12;
                 centerX = (page_width - title_width - 65);
-                contentStream.newLineAtOffset(centerX, 230);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(centerX, 230);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "PT PENIKMAT BABI GULING";
                 title_width = regular_font.getStringWidth(text)/1000*12;
                 centerX = (page_width - title_width - 65);
-                contentStream.newLineAtOffset(centerX, 210);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(centerX, 210);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
-                contentStream.beginText();
-                contentStream.setFont(regular_font, 12);
+                contentStream1.beginText();
+                contentStream1.setFont(regular_font, 12);
                 text = "Manajemen";
                 title_width = regular_font.getStringWidth(text)/1000*12;
                 centerX = (page_width - title_width - 65);
-                contentStream.newLineAtOffset(centerX, 110);
-                contentStream.showText(text);
-                contentStream.endText();
+                contentStream1.newLineAtOffset(centerX, 110);
+                contentStream1.showText(text);
+                contentStream1.endText();
                 
+                contentStream1.close();
             }
+            
+            PDPage page2 = new PDPage();
+            document.addPage(page2);
 
+            float pageHeight = page2.getMediaBox().getHeight();
+            float maxHeight = pageHeight - 100;
+
+            PDPageContentStream contentStream2 = new PDPageContentStream(document, page2);
+            try {
+                contentStream2.setFont(bold_font, 12);
+                
+                contentStream2.beginText();
+                text = "Lampiran 1: Rincian Pendapatan";
+                contentStream2.newLineAtOffset(55, 740);
+                contentStream2.showText(text);
+                contentStream2.endText();
+
+                for (int i = 0; i < tableDataPendapatan[0].length; i++) {
+                    float xPosition = margin + (i * columnWidthsPendapatan[i]);
+                    contentStream2.beginText();
+                    contentStream2.newLineAtOffset(xPosition + cellMargin, yPosition);
+                    contentStream2.showText(tableDataPendapatan[0][i]);
+                    contentStream2.endText();
+                }
+                
+                yPosition -= cellHeight;
+                contentStream2.setFont(regular_font, 12);
+                contentStream2.moveTo(50, yPosition - 2);
+                contentStream2.lineTo(550, yPosition - 2);
+                contentStream2.stroke();
+                contentStream2.moveTo(50, yPosition - 3);
+                contentStream2.lineTo(550, yPosition - 3);
+                contentStream2.stroke();              
+                yPosition -= cellHeight + 10;
+                
+                for (int i = 1; i < tableDataPendapatan.length; i++) {
+                    if (yPosition <= 100) {
+                        contentStream2.setFont(regular_font, 12);
+                        contentStream2.moveTo(50, yPosition - 5);
+                        contentStream2.lineTo(550, yPosition - 5);
+                        contentStream2.stroke();
+                        contentStream2.moveTo(50, yPosition - 6);
+                        contentStream2.lineTo(550, yPosition - 6);
+                        contentStream2.stroke();
+                        PDPage newPage = new PDPage();
+                        document.addPage(newPage);
+                        contentStream2.close(); 
+
+                        contentStream2 = new PDPageContentStream(document, newPage);
+                        contentStream2.setFont(bold_font, 12);
+                        yPosition = pageHeight - 50; 
+
+                        for (int j = 0; j < tableDataPendapatan[0].length; j++) {
+                            float xPosition = margin + (j * columnWidthsPendapatan[j]);
+                            contentStream2.beginText();
+                            contentStream2.newLineAtOffset(xPosition + cellMargin, yPosition);
+                            contentStream2.showText(tableDataPendapatan[0][j]);
+                            contentStream2.endText();
+                        }
+
+                        yPosition -= cellHeight;
+                        contentStream2.setFont(regular_font, 12);
+                        contentStream2.moveTo(50, yPosition - 2);
+                        contentStream2.lineTo(550, yPosition - 2);
+                        contentStream2.stroke();
+                        contentStream2.moveTo(50, yPosition - 3);
+                        contentStream2.lineTo(550, yPosition - 3);
+                        contentStream2.stroke();              
+                        yPosition -= cellHeight + 10;
+                    }
+                    
+                    contentStream2.setFont(regular_font, 12);
+                    for (int j = 0; j < tableDataPendapatan[i].length; j++) {
+                        float xPosition = margin + (j * columnWidthsPendapatan[j]);
+                        contentStream2.beginText();
+                        contentStream2.newLineAtOffset(xPosition + cellMargin, yPosition);
+                        contentStream2.showText(tableDataPendapatan[i][j]);
+                        contentStream2.endText();
+                    }
+                    contentStream2.setFont(regular_font, 12);
+                    yPosition -= cellHeight;
+                }
+                
+                contentStream2.setFont(regular_font, 12);
+                contentStream2.moveTo(50, yPosition - 2);
+                contentStream2.lineTo(550, yPosition - 2);
+                contentStream2.stroke();
+                contentStream2.moveTo(50, yPosition - 3);
+                contentStream2.lineTo(550, yPosition - 3);
+                contentStream2.stroke();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    contentStream2.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }       
+            
+            PDPage page3 = new PDPage();
+            document.addPage(page3);
+
+            pageHeight = page3.getMediaBox().getHeight();
+            maxHeight = pageHeight - 100;
+
+            PDPageContentStream contentStream3 = new PDPageContentStream(document, page3);
+            try {
+                contentStream3.setFont(bold_font, 12);
+                
+                contentStream3.beginText();
+                text = "Lampiran 2: Rincian Pengeluaran";
+                contentStream3.newLineAtOffset(55, 740);
+                contentStream3.showText(text);
+                contentStream3.endText();
+                yPosition = 700; 
+
+                for (int i = 0; i < tableDataPengeluaran[0].length; i++) {
+                    String cellData = tableDataPengeluaran[0][i];
+                    if (cellData == null) {
+                        cellData = "";
+                    }
+                    float xPosition = margin + (i * columnWidthsPengeluaran[i]);
+                    contentStream3.beginText();
+                    contentStream3.newLineAtOffset(xPosition + cellMargin, yPosition);
+                    contentStream3.showText(cellData);
+                    contentStream3.endText();
+                }
+                
+                yPosition -= cellHeight;
+                contentStream3.setFont(regular_font, 12);
+                contentStream3.moveTo(50, yPosition - 2);
+                contentStream3.lineTo(550, yPosition - 2);
+                contentStream3.stroke();
+                contentStream3.moveTo(50, yPosition - 3);
+                contentStream3.lineTo(550, yPosition - 3);
+                contentStream3.stroke();              
+                yPosition -= cellHeight + 10;
+                
+                for (int i = 1; i < tableDataPengeluaran.length; i++) {
+                    if (yPosition <= 100) {
+                        contentStream3.setFont(regular_font, 12);
+                        contentStream3.moveTo(50, yPosition - 5);
+                        contentStream3.lineTo(550, yPosition - 5);
+                        contentStream3.stroke();
+                        contentStream3.moveTo(50, yPosition - 6);
+                        contentStream3.lineTo(550, yPosition - 6);
+                        contentStream3.stroke();
+                        PDPage newPage = new PDPage();
+                        document.addPage(newPage);
+                        contentStream3.close(); 
+
+                        contentStream3 = new PDPageContentStream(document, newPage);
+                        contentStream3.setFont(bold_font, 12);
+                        yPosition = pageHeight - 50; 
+
+                        for (int j = 0; j < tableDataPengeluaran[0].length; j++) {
+                            float xPosition = margin + (j * columnWidthsPengeluaran[j]);
+                            contentStream3.beginText();
+                            contentStream3.newLineAtOffset(xPosition + cellMargin, yPosition);
+                            contentStream3.showText(tableDataPengeluaran[0][j]);
+                            contentStream3.endText();
+                        }
+
+                        yPosition -= cellHeight;
+                        contentStream3.setFont(regular_font, 12);
+                        contentStream3.moveTo(50, yPosition - 2);
+                        contentStream3.lineTo(550, yPosition - 2);
+                        contentStream3.stroke();
+                        contentStream3.moveTo(50, yPosition - 3);
+                        contentStream3.lineTo(550, yPosition - 3);
+                        contentStream3.stroke();              
+                        yPosition -= cellHeight + 10;
+                    }
+                    
+                    contentStream3.setFont(regular_font, 12);
+                    for (int j = 0; j < tableDataPengeluaran[i].length; j++) {
+                        String cellData = tableDataPengeluaran[i][j];
+    
+                        // Check for null or empty values
+                        if (cellData == null) {
+                            cellData = ""; // If null, set to an empty string
+                        }
+
+                        float xPosition = margin + (j * columnWidthsPengeluaran[j]);
+                        contentStream3.beginText();
+                        contentStream3.newLineAtOffset(xPosition + cellMargin, yPosition);
+                        contentStream3.showText(cellData);
+                        contentStream3.endText();
+                    }
+                    contentStream3.setFont(regular_font, 12);
+                    yPosition -= cellHeight;
+                }
+                
+                contentStream3.setFont(regular_font, 12);
+                contentStream3.moveTo(50, yPosition - 2);
+                contentStream3.lineTo(550, yPosition - 2);
+                contentStream3.stroke();
+                contentStream3.moveTo(50, yPosition - 3);
+                contentStream3.lineTo(550, yPosition - 3);
+                contentStream3.stroke();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    contentStream3.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            
             // Save the document
             String outputPath = "/home/johntor81/Documents/NetBeans/CashReport/src/cashreport/pdf/laporan_"+this.selected_starting_date + "_" + this.selected_ending_date+".pdf";
             document.save(outputPath);
@@ -595,26 +913,28 @@ public class Keuangan extends javax.swing.JFrame {
         pendapatan_text_field.setEditable(false);
         pengeluaran_text_field.setEditable(false);
         
-        model_pendapatan = new DefaultTableModel();
+        model_transaksi = new DefaultTableModel();
         model_pengeluaran = new DefaultTableModel();
 
-        tabel_keuangan_pendapatan.setModel(model_pendapatan);
+        tabel_keuangan_transaksi.setModel(model_transaksi);
         tabel_keuangan_pengeluaran.setModel(model_pengeluaran);
 
-        TableRowSorter<TableModel> sorter_pendapatan = new TableRowSorter<>(model_pendapatan);
+        TableRowSorter<TableModel> sorter_pendapatan = new TableRowSorter<>(model_transaksi);
         TableRowSorter<TableModel> sorter_pengeluaran = new TableRowSorter<>(model_pengeluaran);
-        tabel_keuangan_pendapatan.setRowSorter(sorter_pendapatan);
+        tabel_keuangan_transaksi.setRowSorter(sorter_pendapatan);
         tabel_keuangan_pengeluaran.setRowSorter(sorter_pengeluaran);
 
-        model_pendapatan.addColumn("id_transaksi");
-        model_pendapatan.addColumn("nominal");
-        model_pendapatan.addColumn("tanggal");
-        model_pendapatan.addColumn("metode_pembayaran");
+        model_transaksi.addColumn("ID");
+        model_transaksi.addColumn("Nominal");
+        model_transaksi.addColumn("Tanggal");
+        model_transaksi.addColumn("Metode");
+        model_transaksi.addColumn("Jenis Pembayaran");
 
-        model_pengeluaran.addColumn("id_transaksi");
-        model_pengeluaran.addColumn("nominal");
-        model_pengeluaran.addColumn("tanggal");
-        model_pengeluaran.addColumn("metode_pembayaran");
+        model_pengeluaran.addColumn("Nama Pegawai");
+        model_pengeluaran.addColumn("Role");
+        model_pengeluaran.addColumn("Nominal");
+        model_pengeluaran.addColumn("Potongan");
+        model_pengeluaran.addColumn("Metode");
         
         sorter_pendapatan.setComparator(0, new Comparator<String>() {
             @Override
@@ -641,9 +961,19 @@ public class Keuangan extends javax.swing.JFrame {
             }
         });
         
+        Calendar calendar = Calendar.getInstance();
+        
+        int currentMonth = calendar.get(Calendar.MONTH);
+        String currentYear = String.format("%d", calendar.get(Calendar.YEAR));
+        
+        payroll_month.setSelectedIndex(currentMonth);
+        transaksi_month.setSelectedIndex(currentMonth);
+        payroll_year.setText(currentYear);
+        transaksi_year.setText(currentYear);
+        
         this.update_dashboard();
-        this.update_pendapatan();
-        this.update_pengeluaran();
+        this.update_transaksi();
+        this.update_payroll();
     }
     
     /**
@@ -659,8 +989,8 @@ public class Keuangan extends javax.swing.JFrame {
         side_bar = new javax.swing.JPanel();
         dashboard_button_side = new javax.swing.JButton();
         laporan_button_edit = new javax.swing.JButton();
-        pendapatan_button_edit = new javax.swing.JButton();
-        pengeluaran_button_edit = new javax.swing.JButton();
+        transaksi_button_edit = new javax.swing.JButton();
+        payroll_button_edit = new javax.swing.JButton();
         Parent = new javax.swing.JPanel();
         main_content_dashboard = new javax.swing.JPanel();
         header_dashboard = new javax.swing.JLabel();
@@ -687,21 +1017,21 @@ public class Keuangan extends javax.swing.JFrame {
         laporan_starting_date = new com.toedter.calendar.JDateChooser();
         jLabel2 = new javax.swing.JLabel();
         laporan_ending_date = new com.toedter.calendar.JDateChooser();
-        main_content_pendapatan = new javax.swing.JPanel();
-        header_pendapatan = new javax.swing.JLabel();
-        scroll_tabel_keuangan_pendapatan = new javax.swing.JScrollPane();
-        tabel_keuangan_pendapatan = new javax.swing.JTable();
-        pendapatan_month = new javax.swing.JComboBox<>();
-        pendapatan_year = new javax.swing.JTextField();
-        pie_chart_pendapatan = new javax.swing.JPanel();
+        main_content_transaksi = new javax.swing.JPanel();
+        header_transaksi = new javax.swing.JLabel();
+        scroll_tabel_keuangan_transaksi = new javax.swing.JScrollPane();
+        tabel_keuangan_transaksi = new javax.swing.JTable();
+        transaksi_month = new javax.swing.JComboBox<>();
+        transaksi_year = new javax.swing.JTextField();
+        pie_chart_transaksi = new javax.swing.JPanel();
         header3 = new javax.swing.JLabel();
-        main_content_pengeluaran = new javax.swing.JPanel();
-        header_pengeluaran = new javax.swing.JLabel();
-        scroll_tabel_keuangan_pengeluaran = new javax.swing.JScrollPane();
+        main_content_payroll = new javax.swing.JPanel();
+        header_payroll = new javax.swing.JLabel();
+        scroll_tabel_keuangan_payroll = new javax.swing.JScrollPane();
         tabel_keuangan_pengeluaran = new javax.swing.JTable();
-        pengeluaran_year = new javax.swing.JTextField();
-        pengeluaran_month = new javax.swing.JComboBox<>();
-        pie_chart_pengeluaran = new javax.swing.JPanel();
+        payroll_year = new javax.swing.JTextField();
+        payroll_month = new javax.swing.JComboBox<>();
+        pie_chart_payroll = new javax.swing.JPanel();
         header4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -727,21 +1057,21 @@ public class Keuangan extends javax.swing.JFrame {
             }
         });
 
-        pendapatan_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pendapatan_button_edit.setFont(new java.awt.Font("JetBrainsMono NF ExtraBold", 1, 18)); // NOI18N
-        pendapatan_button_edit.setText("PENDAPATAN");
-        pendapatan_button_edit.addActionListener(new java.awt.event.ActionListener() {
+        transaksi_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        transaksi_button_edit.setFont(new java.awt.Font("JetBrainsMono NF ExtraBold", 1, 18)); // NOI18N
+        transaksi_button_edit.setText("TRANSAKSI");
+        transaksi_button_edit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pendapatan_button_editActionPerformed(evt);
+                transaksi_button_editActionPerformed(evt);
             }
         });
 
-        pengeluaran_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pengeluaran_button_edit.setFont(new java.awt.Font("JetBrainsMono NF ExtraBold", 1, 18)); // NOI18N
-        pengeluaran_button_edit.setText("PENGELUARAN");
-        pengeluaran_button_edit.addActionListener(new java.awt.event.ActionListener() {
+        payroll_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        payroll_button_edit.setFont(new java.awt.Font("JetBrainsMono NF ExtraBold", 1, 18)); // NOI18N
+        payroll_button_edit.setText("PAYROLL");
+        payroll_button_edit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pengeluaran_button_editActionPerformed(evt);
+                payroll_button_editActionPerformed(evt);
             }
         });
 
@@ -752,8 +1082,8 @@ public class Keuangan extends javax.swing.JFrame {
             .addGroup(side_barLayout.createSequentialGroup()
                 .addGap(16, 16, 16)
                 .addGroup(side_barLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pengeluaran_button_edit, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pendapatan_button_edit, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(payroll_button_edit, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(transaksi_button_edit, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(laporan_button_edit, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(dashboard_button_side, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(18, Short.MAX_VALUE))
@@ -766,9 +1096,9 @@ public class Keuangan extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(laporan_button_edit)
                 .addGap(18, 18, 18)
-                .addComponent(pendapatan_button_edit)
+                .addComponent(transaksi_button_edit)
                 .addGap(18, 18, 18)
-                .addComponent(pengeluaran_button_edit)
+                .addComponent(payroll_button_edit)
                 .addGap(122, 122, 122))
         );
 
@@ -1070,17 +1400,17 @@ public class Keuangan extends javax.swing.JFrame {
 
         Parent.add(main_content_laporan, "card5");
 
-        main_content_pendapatan.setBackground(new java.awt.Color(255, 255, 255));
-        main_content_pendapatan.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(174, 195, 176), 4));
+        main_content_transaksi.setBackground(new java.awt.Color(255, 255, 255));
+        main_content_transaksi.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(174, 195, 176), 4));
 
-        header_pendapatan.setFont(new java.awt.Font("JetBrainsMono NFM", 1, 36)); // NOI18N
-        header_pendapatan.setText("Pendapatan Keuangan");
+        header_transaksi.setFont(new java.awt.Font("JetBrainsMono NFM", 1, 36)); // NOI18N
+        header_transaksi.setText("Transaksi Keuangan");
 
-        scroll_tabel_keuangan_pendapatan.setBackground(new java.awt.Color(204, 204, 204));
-        scroll_tabel_keuangan_pendapatan.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        scroll_tabel_keuangan_transaksi.setBackground(new java.awt.Color(204, 204, 204));
+        scroll_tabel_keuangan_transaksi.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        tabel_keuangan_pendapatan.setFont(new java.awt.Font("Helvetica", 0, 17)); // NOI18N
-        tabel_keuangan_pendapatan.setModel(new javax.swing.table.DefaultTableModel(
+        tabel_keuangan_transaksi.setFont(new java.awt.Font("Helvetica", 0, 17)); // NOI18N
+        tabel_keuangan_transaksi.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -1091,94 +1421,94 @@ public class Keuangan extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        scroll_tabel_keuangan_pendapatan.setViewportView(tabel_keuangan_pendapatan);
+        scroll_tabel_keuangan_transaksi.setViewportView(tabel_keuangan_transaksi);
 
-        pendapatan_month.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
-        pendapatan_month.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember" }));
-        pendapatan_month.addActionListener(new java.awt.event.ActionListener() {
+        transaksi_month.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
+        transaksi_month.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember" }));
+        transaksi_month.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pendapatan_monthActionPerformed(evt);
+                transaksi_monthActionPerformed(evt);
             }
         });
 
-        pendapatan_year.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
-        pendapatan_year.setText("2024");
-        pendapatan_year.addActionListener(new java.awt.event.ActionListener() {
+        transaksi_year.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
+        transaksi_year.setText("2024");
+        transaksi_year.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pendapatan_yearActionPerformed(evt);
+                transaksi_yearActionPerformed(evt);
             }
         });
 
-        pie_chart_pendapatan.setBackground(new java.awt.Color(255, 255, 255));
-        pie_chart_pendapatan.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pie_chart_transaksi.setBackground(new java.awt.Color(255, 255, 255));
+        pie_chart_transaksi.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         header3.setFont(new java.awt.Font("JetBrainsMono NFM Light", 0, 18)); // NOI18N
         header3.setText("Diagram");
 
-        javax.swing.GroupLayout pie_chart_pendapatanLayout = new javax.swing.GroupLayout(pie_chart_pendapatan);
-        pie_chart_pendapatan.setLayout(pie_chart_pendapatanLayout);
-        pie_chart_pendapatanLayout.setHorizontalGroup(
-            pie_chart_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pie_chart_pendapatanLayout.createSequentialGroup()
+        javax.swing.GroupLayout pie_chart_transaksiLayout = new javax.swing.GroupLayout(pie_chart_transaksi);
+        pie_chart_transaksi.setLayout(pie_chart_transaksiLayout);
+        pie_chart_transaksiLayout.setHorizontalGroup(
+            pie_chart_transaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pie_chart_transaksiLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(header3)
                 .addGap(70, 70, 70))
         );
-        pie_chart_pendapatanLayout.setVerticalGroup(
-            pie_chart_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pie_chart_pendapatanLayout.createSequentialGroup()
+        pie_chart_transaksiLayout.setVerticalGroup(
+            pie_chart_transaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pie_chart_transaksiLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(header3)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout main_content_pendapatanLayout = new javax.swing.GroupLayout(main_content_pendapatan);
-        main_content_pendapatan.setLayout(main_content_pendapatanLayout);
-        main_content_pendapatanLayout.setHorizontalGroup(
-            main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(main_content_pendapatanLayout.createSequentialGroup()
+        javax.swing.GroupLayout main_content_transaksiLayout = new javax.swing.GroupLayout(main_content_transaksi);
+        main_content_transaksi.setLayout(main_content_transaksiLayout);
+        main_content_transaksiLayout.setHorizontalGroup(
+            main_content_transaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(main_content_transaksiLayout.createSequentialGroup()
                 .addGap(38, 38, 38)
-                .addGroup(main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(main_content_pendapatanLayout.createSequentialGroup()
-                        .addComponent(header_pendapatan)
-                        .addGap(0, 394, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pendapatanLayout.createSequentialGroup()
+                .addGroup(main_content_transaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(main_content_transaksiLayout.createSequentialGroup()
+                        .addComponent(header_transaksi)
+                        .addGap(0, 416, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_transaksiLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(pendapatan_month, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(transaksi_month, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pendapatan_year, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pendapatanLayout.createSequentialGroup()
-                        .addComponent(pie_chart_pendapatan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(transaksi_year, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_transaksiLayout.createSequentialGroup()
+                        .addComponent(pie_chart_transaksi, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
-                        .addComponent(scroll_tabel_keuangan_pendapatan, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(scroll_tabel_keuangan_transaksi, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(48, 48, 48))
         );
-        main_content_pendapatanLayout.setVerticalGroup(
-            main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pendapatanLayout.createSequentialGroup()
+        main_content_transaksiLayout.setVerticalGroup(
+            main_content_transaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_transaksiLayout.createSequentialGroup()
                 .addGap(42, 42, 42)
-                .addComponent(header_pendapatan)
+                .addComponent(header_transaksi)
                 .addGap(26, 26, 26)
-                .addGroup(main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(pendapatan_month)
-                    .addComponent(pendapatan_year, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(main_content_transaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(transaksi_month)
+                    .addComponent(transaksi_year, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(main_content_pendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(pie_chart_pendapatan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(scroll_tabel_keuangan_pendapatan, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(main_content_transaksiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(pie_chart_transaksi, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(scroll_tabel_keuangan_transaksi, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(70, Short.MAX_VALUE))
         );
 
-        Parent.add(main_content_pendapatan, "card4");
+        Parent.add(main_content_transaksi, "card4");
 
-        main_content_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
-        main_content_pengeluaran.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(174, 195, 176), 4));
+        main_content_payroll.setBackground(new java.awt.Color(255, 255, 255));
+        main_content_payroll.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(174, 195, 176), 4));
 
-        header_pengeluaran.setFont(new java.awt.Font("JetBrainsMono NFM", 1, 36)); // NOI18N
-        header_pengeluaran.setText("Pengeluaran Keuangan");
+        header_payroll.setFont(new java.awt.Font("JetBrainsMono NFM", 1, 36)); // NOI18N
+        header_payroll.setText("Payroll Keuangan");
 
-        scroll_tabel_keuangan_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
-        scroll_tabel_keuangan_pengeluaran.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        scroll_tabel_keuangan_payroll.setBackground(new java.awt.Color(255, 255, 255));
+        scroll_tabel_keuangan_payroll.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         tabel_keuangan_pengeluaran.setFont(new java.awt.Font("Helvetica", 0, 17)); // NOI18N
         tabel_keuangan_pengeluaran.setModel(new javax.swing.table.DefaultTableModel(
@@ -1192,87 +1522,87 @@ public class Keuangan extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        scroll_tabel_keuangan_pengeluaran.setViewportView(tabel_keuangan_pengeluaran);
+        scroll_tabel_keuangan_payroll.setViewportView(tabel_keuangan_pengeluaran);
 
-        pengeluaran_year.setFont(new java.awt.Font("JetBrainsMono NF SemiBold", 0, 14)); // NOI18N
-        pengeluaran_year.setText("2024");
-        pengeluaran_year.addActionListener(new java.awt.event.ActionListener() {
+        payroll_year.setFont(new java.awt.Font("JetBrainsMono NF SemiBold", 0, 14)); // NOI18N
+        payroll_year.setText("2024");
+        payroll_year.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pengeluaran_yearActionPerformed(evt);
+                payroll_yearActionPerformed(evt);
             }
         });
 
-        pengeluaran_month.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
-        pengeluaran_month.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember" }));
-        pengeluaran_month.addActionListener(new java.awt.event.ActionListener() {
+        payroll_month.setFont(new java.awt.Font("JetBrainsMono NFM SemiBold", 0, 14)); // NOI18N
+        payroll_month.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember" }));
+        payroll_month.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pengeluaran_monthActionPerformed(evt);
+                payroll_monthActionPerformed(evt);
             }
         });
 
-        pie_chart_pengeluaran.setBackground(new java.awt.Color(255, 255, 255));
-        pie_chart_pengeluaran.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pie_chart_payroll.setBackground(new java.awt.Color(255, 255, 255));
+        pie_chart_payroll.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         header4.setFont(new java.awt.Font("JetBrainsMono NFM Light", 0, 18)); // NOI18N
         header4.setText("Diagram");
 
-        javax.swing.GroupLayout pie_chart_pengeluaranLayout = new javax.swing.GroupLayout(pie_chart_pengeluaran);
-        pie_chart_pengeluaran.setLayout(pie_chart_pengeluaranLayout);
-        pie_chart_pengeluaranLayout.setHorizontalGroup(
-            pie_chart_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pie_chart_pengeluaranLayout.createSequentialGroup()
+        javax.swing.GroupLayout pie_chart_payrollLayout = new javax.swing.GroupLayout(pie_chart_payroll);
+        pie_chart_payroll.setLayout(pie_chart_payrollLayout);
+        pie_chart_payrollLayout.setHorizontalGroup(
+            pie_chart_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pie_chart_payrollLayout.createSequentialGroup()
                 .addContainerGap(73, Short.MAX_VALUE)
                 .addComponent(header4)
                 .addGap(70, 70, 70))
         );
-        pie_chart_pengeluaranLayout.setVerticalGroup(
-            pie_chart_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pie_chart_pengeluaranLayout.createSequentialGroup()
+        pie_chart_payrollLayout.setVerticalGroup(
+            pie_chart_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pie_chart_payrollLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(header4)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout main_content_pengeluaranLayout = new javax.swing.GroupLayout(main_content_pengeluaran);
-        main_content_pengeluaran.setLayout(main_content_pengeluaranLayout);
-        main_content_pengeluaranLayout.setHorizontalGroup(
-            main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
+        javax.swing.GroupLayout main_content_payrollLayout = new javax.swing.GroupLayout(main_content_payroll);
+        main_content_payroll.setLayout(main_content_payrollLayout);
+        main_content_payrollLayout.setHorizontalGroup(
+            main_content_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(main_content_payrollLayout.createSequentialGroup()
                 .addGap(38, 38, 38)
-                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
-                        .addComponent(header_pengeluaran)
+                .addGroup(main_content_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(main_content_payrollLayout.createSequentialGroup()
+                        .addComponent(header_payroll)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
-                        .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
-                                .addComponent(pie_chart_pengeluaran, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(main_content_payrollLayout.createSequentialGroup()
+                        .addGroup(main_content_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(main_content_payrollLayout.createSequentialGroup()
+                                .addComponent(pie_chart_payroll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGap(18, 18, 18)
-                                .addComponent(scroll_tabel_keuangan_pengeluaran, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(main_content_pengeluaranLayout.createSequentialGroup()
+                                .addComponent(scroll_tabel_keuangan_payroll, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(main_content_payrollLayout.createSequentialGroup()
                                 .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(pengeluaran_month, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(payroll_month, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(pengeluaran_year, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(payroll_year, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(48, 48, 48))))
         );
-        main_content_pengeluaranLayout.setVerticalGroup(
-            main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_pengeluaranLayout.createSequentialGroup()
+        main_content_payrollLayout.setVerticalGroup(
+            main_content_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, main_content_payrollLayout.createSequentialGroup()
                 .addGap(42, 42, 42)
-                .addComponent(header_pengeluaran)
+                .addComponent(header_payroll)
                 .addGap(26, 26, 26)
-                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(pengeluaran_month)
-                    .addComponent(pengeluaran_year, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(main_content_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(payroll_month)
+                    .addComponent(payroll_year, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(main_content_pengeluaranLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(pie_chart_pengeluaran, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(scroll_tabel_keuangan_pengeluaran, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(main_content_payrollLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(pie_chart_payroll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(scroll_tabel_keuangan_payroll, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(70, Short.MAX_VALUE))
         );
 
-        Parent.add(main_content_pengeluaran, "card5");
+        Parent.add(main_content_payroll, "card5");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1298,8 +1628,8 @@ public class Keuangan extends javax.swing.JFrame {
         Parent.repaint();
         Parent.revalidate();
         laporan_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pendapatan_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pengeluaran_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        transaksi_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        payroll_button_edit.setBackground(new java.awt.Color(150, 149, 146));
         dashboard_button_side.setBackground(new java.awt.Color(239, 246, 224));
         this.update_dashboard();
     }//GEN-LAST:event_dashboard_button_sideActionPerformed
@@ -1310,34 +1640,34 @@ public class Keuangan extends javax.swing.JFrame {
         Parent.repaint();
         Parent.revalidate();
         laporan_button_edit.setBackground(new java.awt.Color(239, 246, 224));
-        pendapatan_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pengeluaran_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        transaksi_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        payroll_button_edit.setBackground(new java.awt.Color(150, 149, 146));
         dashboard_button_side.setBackground(new java.awt.Color(150, 149, 146));
     }//GEN-LAST:event_laporan_button_editActionPerformed
 
-    private void pendapatan_button_editActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pendapatan_button_editActionPerformed
+    private void transaksi_button_editActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transaksi_button_editActionPerformed
         Parent.removeAll();
-        Parent.add(main_content_pendapatan);
+        Parent.add(main_content_transaksi);
         Parent.repaint();
         Parent.revalidate();
         laporan_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pendapatan_button_edit.setBackground(new java.awt.Color(239, 246, 224));
-        pengeluaran_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        transaksi_button_edit.setBackground(new java.awt.Color(239, 246, 224));
+        payroll_button_edit.setBackground(new java.awt.Color(150, 149, 146));
         dashboard_button_side.setBackground(new java.awt.Color(150, 149, 146));
-        this.update_pendapatan();
-    }//GEN-LAST:event_pendapatan_button_editActionPerformed
+        this.update_transaksi();
+    }//GEN-LAST:event_transaksi_button_editActionPerformed
 
-    private void pengeluaran_button_editActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pengeluaran_button_editActionPerformed
+    private void payroll_button_editActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_payroll_button_editActionPerformed
         Parent.removeAll();
-        Parent.add(main_content_pengeluaran);
+        Parent.add(main_content_payroll);
         Parent.repaint();
         Parent.revalidate();
         laporan_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pendapatan_button_edit.setBackground(new java.awt.Color(150, 149, 146));
-        pengeluaran_button_edit.setBackground(new java.awt.Color(239, 246, 224));
+        transaksi_button_edit.setBackground(new java.awt.Color(150, 149, 146));
+        payroll_button_edit.setBackground(new java.awt.Color(239, 246, 224));
         dashboard_button_side.setBackground(new java.awt.Color(150, 149, 146));
-        this.update_pengeluaran();
-    }//GEN-LAST:event_pengeluaran_button_editActionPerformed
+        this.update_payroll();
+    }//GEN-LAST:event_payroll_button_editActionPerformed
 
     private void laba_bersih_text_fieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_laba_bersih_text_fieldActionPerformed
         // TODO add your handling code here:
@@ -1347,21 +1677,21 @@ public class Keuangan extends javax.swing.JFrame {
         this.generate_report();
     }//GEN-LAST:event_create_laporanActionPerformed
 
-    private void pendapatan_monthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pendapatan_monthActionPerformed
-        this.update_pendapatan();
-    }//GEN-LAST:event_pendapatan_monthActionPerformed
+    private void transaksi_monthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transaksi_monthActionPerformed
+        this.update_transaksi();
+    }//GEN-LAST:event_transaksi_monthActionPerformed
 
-    private void pendapatan_yearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pendapatan_yearActionPerformed
-        this.update_pendapatan();
-    }//GEN-LAST:event_pendapatan_yearActionPerformed
+    private void transaksi_yearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transaksi_yearActionPerformed
+        this.update_transaksi();
+    }//GEN-LAST:event_transaksi_yearActionPerformed
 
-    private void pengeluaran_monthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pengeluaran_monthActionPerformed
-        this.update_pengeluaran();
-    }//GEN-LAST:event_pengeluaran_monthActionPerformed
+    private void payroll_monthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_payroll_monthActionPerformed
+        this.update_payroll();
+    }//GEN-LAST:event_payroll_monthActionPerformed
 
-    private void pengeluaran_yearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pengeluaran_yearActionPerformed
-        this.update_pengeluaran();
-    }//GEN-LAST:event_pengeluaran_yearActionPerformed
+    private void payroll_yearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_payroll_yearActionPerformed
+        this.update_payroll();
+    }//GEN-LAST:event_payroll_yearActionPerformed
 
     
     /**
@@ -1409,8 +1739,8 @@ public class Keuangan extends javax.swing.JFrame {
     private javax.swing.JLabel header4;
     private javax.swing.JLabel header_dashboard;
     private javax.swing.JLabel header_laporan;
-    private javax.swing.JLabel header_pendapatan;
-    private javax.swing.JLabel header_pengeluaran;
+    private javax.swing.JLabel header_payroll;
+    private javax.swing.JLabel header_transaksi;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollBar jScrollBar1;
@@ -1424,29 +1754,29 @@ public class Keuangan extends javax.swing.JFrame {
     private javax.swing.JPanel line_chart_dashboard;
     private javax.swing.JPanel main_content_dashboard;
     private javax.swing.JPanel main_content_laporan;
-    private javax.swing.JPanel main_content_pendapatan;
-    private javax.swing.JPanel main_content_pengeluaran;
-    private javax.swing.JButton pendapatan_button_edit;
+    private javax.swing.JPanel main_content_payroll;
+    private javax.swing.JPanel main_content_transaksi;
+    private javax.swing.JButton payroll_button_edit;
+    private javax.swing.JComboBox<String> payroll_month;
+    private javax.swing.JTextField payroll_year;
     private javax.swing.JLabel pendapatan_icon;
     private javax.swing.JLabel pendapatan_label;
-    private javax.swing.JComboBox<String> pendapatan_month;
     private javax.swing.JPanel pendapatan_panel_dashboard;
     private javax.swing.JTextField pendapatan_text_field;
-    private javax.swing.JTextField pendapatan_year;
-    private javax.swing.JButton pengeluaran_button_edit;
     private javax.swing.JLabel pengeluaran_icon;
     private javax.swing.JLabel pengeluaran_label;
-    private javax.swing.JComboBox<String> pengeluaran_month;
     private javax.swing.JPanel pengeluaran_panel_dashboard;
     private javax.swing.JTextField pengeluaran_text_field;
-    private javax.swing.JTextField pengeluaran_year;
     private javax.swing.JPanel pie_chart_dashboard;
-    private javax.swing.JPanel pie_chart_pendapatan;
-    private javax.swing.JPanel pie_chart_pengeluaran;
-    private javax.swing.JScrollPane scroll_tabel_keuangan_pendapatan;
-    private javax.swing.JScrollPane scroll_tabel_keuangan_pengeluaran;
+    private javax.swing.JPanel pie_chart_payroll;
+    private javax.swing.JPanel pie_chart_transaksi;
+    private javax.swing.JScrollPane scroll_tabel_keuangan_payroll;
+    private javax.swing.JScrollPane scroll_tabel_keuangan_transaksi;
     private javax.swing.JPanel side_bar;
-    private javax.swing.JTable tabel_keuangan_pendapatan;
     private javax.swing.JTable tabel_keuangan_pengeluaran;
+    private javax.swing.JTable tabel_keuangan_transaksi;
+    private javax.swing.JButton transaksi_button_edit;
+    private javax.swing.JComboBox<String> transaksi_month;
+    private javax.swing.JTextField transaksi_year;
     // End of variables declaration//GEN-END:variables
 }
