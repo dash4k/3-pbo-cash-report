@@ -993,6 +993,7 @@ public class Keuangan extends javax.swing.JFrame {
     private void initComponents() {
 
         jScrollBar1 = new javax.swing.JScrollBar();
+        jComboBox1 = new javax.swing.JComboBox<>();
         side_bar = new javax.swing.JPanel();
         dashboard_button_side = new javax.swing.JButton();
         laporan_button_edit = new javax.swing.JButton();
@@ -1040,6 +1041,8 @@ public class Keuangan extends javax.swing.JFrame {
         payroll_month = new javax.swing.JComboBox<>();
         pie_chart_payroll = new javax.swing.JPanel();
         header4 = new javax.swing.JLabel();
+
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -1748,6 +1751,7 @@ public class Keuangan extends javax.swing.JFrame {
     private javax.swing.JLabel header_laporan;
     private javax.swing.JLabel header_payroll;
     private javax.swing.JLabel header_transaksi;
+    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollBar jScrollBar1;
